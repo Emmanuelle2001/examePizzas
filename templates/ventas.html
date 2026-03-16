@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ventas - Pizzería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-red-600">
+                    Sistema de Ventas - Pizzería
+                </span>
+            </h1>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Ventas del Día</p>
+                        <p class="text-3xl font-bold text-gray-900">${{ "%.2f"|format(total_hoy) }}</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-full">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                {% if ventas_hoy %}
+                <div class="mt-4">
+                    <p class="text-sm font-medium text-gray-600 mb-2">Últimas ventas:</p>
+                    <div class="space-y-2">
+                        {% for venta in ventas_hoy[-3:] %}
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">{{ venta.nombre }}</span>
+                            <span class="font-medium text-green-600">${{ "%.2f"|format(venta.total) }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Agregar Pizza al Pedido
+                    </h2>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="mb-4 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border-l-4 border-green-500{% elif category == 'error' %}bg-red-100 text-red-800 border-l-4 border-red-500{% else %}bg-blue-100 text-blue-800 border-l-4 border-blue-500{% endif %}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('inicio') }}" class="space-y-6">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="tipo_formulario" value="pizza">
+                        
+                        <div class="bg-gray-50 p-4 rounded-xl">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Datos del Cliente</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                                    <input type="text" name="nombre" value="{{ session.get('datos_cliente', {}).get('nombre', '') }}" 
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                           placeholder="Nombre completo" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                                    <input type="text" name="direccion" value="{{ session.get('datos_cliente', {}).get('direccion', '') }}"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                           placeholder="Dirección" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                    <input type="tel" name="telefono" value="{{ session.get('datos_cliente', {}).get('telefono', '') }}"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                           placeholder="Teléfono" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-xl">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Configura tu Pizza</h3>
+                            
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Tamaño</label>
+                                <div class="flex flex-wrap gap-4">
+                                    {% for value, label in [('pequena', 'Pequeña'), ('mediana', 'Mediana'), ('grande', 'Grande')] %}
+                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-orange-50 flex-1 min-w-[120px]">
+                                        <input type="radio" name="tamano" value="{{ value }}" 
+                                               class="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                                               {% if pizza_form.tamano.data == value %}checked{% endif %}>
+                                        <span class="ml-2 text-gray-700">{{ label }}<br><span class="text-xs text-orange-600">${{ PRECIOS_TAMANIO[value] }}</span></span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">
+                                    Ingredientes Extras (${{ PRECIO_ADICIONAL }} c/u)
+                                </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    {% for value, label in [('jamon', 'Jamón'), ('pina', 'Piña'), ('champinones', 'Champiñones')] %}
+                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-orange-50">
+                                        <input type="checkbox" name="{{ value }}" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500">
+                                        <span class="ml-2 text-gray-700">{{ label }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
+                                <input type="number" name="numero" min="1" value="1" 
+                                       class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                                Agregar al Pedido
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Carrito de Compras
+                        <span class="ml-2 bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ cart|length }}</span>
+                    </h2>
+
+                    {% if cart %}
+                        <div class="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
+                            {% for item in cart %}
+                            <div class="bg-gray-50 p-4 rounded-lg relative border border-gray-200 hover:shadow-md transition duration-200">
+                                <form method="POST" action="{{ url_for('eliminar_pizza', indice=loop.index0) }}" class="absolute top-2 right-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-sm" title="Eliminar">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                                <p class="font-semibold text-gray-800 pr-8">{{ item.tamanio|capitalize }}</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-medium">Ingredientes:</span> 
+                                    {{ item.ingredientes or 'Sencilla' }}
+                                </p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <p class="text-sm text-gray-600">Cantidad: 
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                            {{ item.cantidad }}
+                                        </span>
+                                    </p>
+                                    <p class="text-lg font-bold text-orange-600">${{ "%.2f"|format(item.subtotal) }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <div class="flex justify-between text-xl font-bold mb-4">
+                                <span>Total:</span>
+                                <span class="text-orange-600">${{ "%.2f"|format(cart|sum(attribute='subtotal')) }}</span>
+                            </div>
+
+                            <form method="POST" action="{{ url_for('finalizar_pedido') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" 
+                                        class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                                    Finalizar Pedido
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <p class="text-gray-500 text-lg">El carrito está vacío</p>
+                            <p class="text-sm text-gray-400 mt-2">Agrega pizzas para comenzar</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('reportes') }}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Ver Reportes y Consultas
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+</body>
+</html>
